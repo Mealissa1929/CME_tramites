@@ -1,0 +1,82 @@
+{
+  "_comentario": "Fluxo de aprovação de trabalhos acadêmicos. Só dados, sem código. Chaves: estados, estados_finais, transicoes (de, acao, para, condicoes, antes, depois) e mensagens. O estado inicial é o primeiro de 'estados' (ou 'estado_inicial', se existir). A justificativa recebida em transitar() pode ser exigida com campo_preenchido no campo 'justificativa'. O papel de quem executa a ação vem em dados['papel_usuario'].",
+
+  "estados": ["aberto", "em_analise", "aprovado", "rejeitado", "concluido"],
+
+  "estados_finais": ["rejeitado", "concluido"],
+
+  "transicoes": [
+    {
+      "de": "aberto",
+      "acao": "enviar",
+      "para": "em_analise",
+      "condicoes": [
+        { "tipo": "documento_anexado", "documento": "arquivo", "mensagem": "Anexe o arquivo do trabalho antes de enviar." }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "registrar", "mensagem": "Trabalho #{id} enviado para análise." }
+      ]
+    },
+    {
+      "de": "em_analise",
+      "acao": "analisar",
+      "para": "em_analise",
+      "condicoes": [
+        { "tipo": "campo_preenchido", "campo": "justificativa", "mensagem": "Informe o parecer da análise." }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "registrar", "mensagem": "Parecer registrado no trabalho #{id}." }
+      ]
+    },
+    {
+      "de": "em_analise",
+      "acao": "aprovar",
+      "para": "aprovado",
+      "condicoes": [
+        { "tipo": "aprovacao_responsavel", "papel": "orientador", "mensagem": "Só o orientador pode aprovar o trabalho em análise." }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "Trabalho #{id} aprovado." }
+      ]
+    },
+    {
+      "de": "em_analise",
+      "acao": "rejeitar",
+      "para": "rejeitado",
+      "condicoes": [
+        { "tipo": "aprovacao_responsavel", "papel": "orientador", "mensagem": "Só o orientador pode rejeitar o trabalho em análise." },
+        { "tipo": "campo_preenchido", "campo": "justificativa", "mensagem": "Informe a justificativa da rejeição." }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "Trabalho #{id} rejeitado." }
+      ]
+    },
+    {
+      "de": "aprovado",
+      "acao": "concluir",
+      "para": "concluido",
+      "condicoes": [],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "Trabalho #{id} concluído." }
+      ]
+    }
+  ],
+
+  "mensagens": {
+    "acoes": {
+      "enviar": "Só é possível enviar um trabalho que esteja aberto.",
+      "analisar": "Só é possível analisar um trabalho que esteja em análise.",
+      "aprovar": "O trabalho precisa estar em análise para ser aprovado.",
+      "rejeitar": "O trabalho precisa estar em análise para ser rejeitado.",
+      "concluir": "Só é possível concluir um trabalho que já foi aprovado."
+    },
+    "estado_final": "O trabalho está '{estado}' e não pode mais ser alterado.",
+    "acao_invalida": "A ação '{acao}' não é permitida para um trabalho '{estado}'.",
+    "condicao": "Condição não atendida para a ação '{acao}'."
+  }
+}

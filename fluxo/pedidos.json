@@ -1,0 +1,88 @@
+{
+  "_comentario": "Fluxo de processamento de pedidos. Mesma estrutura do trabalhos.json, com estados e regras próprios. Valores de exemplo (mínimo 10, limite 1000, papel gerente): ajuste ao seu enunciado. 'quando' faz a condição valer só se o campo for maior que 'acima_de'.",
+
+  "estados": ["criado", "pago", "enviado", "entregue", "cancelado"],
+
+  "estados_finais": ["entregue", "cancelado"],
+
+  "transicoes": [
+    {
+      "de": "criado",
+      "acao": "pagar",
+      "para": "pago",
+      "condicoes": [
+        { "tipo": "valor_minimo", "campo": "valor", "minimo": 10, "mensagem": "O valor do pedido está abaixo do mínimo." }
+      ],
+      "antes": [
+        { "tipo": "atualizar_campo", "campo": "data_pagamento", "valor": "{agora}" }
+      ],
+      "depois": [
+        { "tipo": "registrar", "mensagem": "Pagamento do pedido #{id} confirmado em {data_pagamento}." }
+      ]
+    },
+    {
+      "de": "pago",
+      "acao": "enviar",
+      "para": "enviado",
+      "condicoes": [],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "Seu pedido #{id} foi enviado." }
+      ]
+    },
+    {
+      "de": "enviado",
+      "acao": "entregar",
+      "para": "entregue",
+      "condicoes": [],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "Seu pedido #{id} foi entregue." }
+      ]
+    },
+    {
+      "de": "criado",
+      "acao": "cancelar",
+      "para": "cancelado",
+      "condicoes": [
+        {
+          "tipo": "aprovacao_responsavel", "papel": "gerente",
+          "quando": { "campo": "valor", "acima_de": 1000 },
+          "mensagem": "Cancelar um pedido acima de R$ 1.000 exige aprovação do gerente."
+        }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "O pedido #{id} foi cancelado." }
+      ]
+    },
+    {
+      "de": "pago",
+      "acao": "cancelar",
+      "para": "cancelado",
+      "condicoes": [
+        {
+          "tipo": "aprovacao_responsavel", "papel": "gerente",
+          "quando": { "campo": "valor", "acima_de": 1000 },
+          "mensagem": "Cancelar um pedido acima de R$ 1.000 exige aprovação do gerente."
+        }
+      ],
+      "antes": [],
+      "depois": [
+        { "tipo": "notificar", "mensagem": "O pedido #{id} foi cancelado." }
+      ]
+    }
+  ],
+
+  "mensagens": {
+    "acoes": {
+      "pagar": "Só é possível pagar um pedido que esteja criado.",
+      "enviar": "O pedido precisa ter o pagamento confirmado antes de ser enviado.",
+      "entregar": "O pedido precisa ter sido enviado antes de ser entregue.",
+      "cancelar": "Só é possível cancelar um pedido criado ou pago."
+    },
+    "estado_final": "O pedido está '{estado}' e não pode mais ser alterado.",
+    "acao_invalida": "A ação '{acao}' não é permitida para um pedido '{estado}'.",
+    "condicao": "Condição não atendida para a ação '{acao}'."
+  }
+}

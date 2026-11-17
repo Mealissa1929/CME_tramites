@@ -1,0 +1,1 @@
+-- Molde do database/database.sql do projeto gerado: tabelas processos e historico para o banco escolhido.
